@@ -108,7 +108,7 @@ def feasibility(individual):
                 penalty += 1e8
                 
     return penalty
-
+  
 # Registro degli operatori genetici
 toolbox.register("evaluate", evaluate)
 toolbox.register("mate", tools.cxUniform, indpb=0.5)
