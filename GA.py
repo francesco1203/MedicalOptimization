@@ -4,35 +4,111 @@ import numpy as np
 from fpdf import FPDF
 import subprocess
 import os
+import tkinter as tk
+from tkinter import ttk
 
 
 #parametri dell'ottimizzazione
 Ntot = 100          #numero capienza database
 N = 20              #numero farmaci utilizzati
 
-#paziente
-nome_paziente = "Mario"
-cognome_paziente = "Rossi"
 
-#misure
-misura_glicemia = 85
-misura_pressione_sistolica = 150
-misura_pressione_diastolica = 100
-salute_fegato_reni_perc = 0.5
+def submit_and_close():
+    global nome_cognome, misura_glicemia, misura_pressione_sistolica, misura_pressione_diastolica, ottimizza_costo, salute_fegato_reni_perc
+    
+    # Recupera i valori inseriti
+    nome_cognome = nome_entry.get()
+    misura_glicemia = int(diabete_entry.get())
+    misura_pressione_sistolica = int(pressione_sistolica_entry.get())
+    misura_pressione_diastolica = int(pressione_diastolica_entry.get())
+    ottimizza_costo = bool(checkbox_var.get())
+    salute_fegato_reni_perc = int(percentuale_var.get()) /100
 
-E_d_min = np.maximum(0, misura_glicemia - 80) / 25                                                                      # 80 è consideato nominale
-E_h_min = (np.maximum(misura_pressione_sistolica - 130, 0) + np.maximum(misura_pressione_diastolica - 80, 0)) / 28.3    #
+    # Mostra i valori nella console o elabora ulteriormente
+    print(f"Nome e cognome: {nome_cognome}")
+    print(f"Diabete: {misura_glicemia}")
+    print(f"Pressione diastolica: {misura_pressione_diastolica }")
+    print(f"Pressione sistolica: {misura_pressione_sistolica}")
+    print(f"Ottimizza costo selezionato: {ottimizza_costo}")
+    print(f"Percentuale: {salute_fegato_reni_perc}%")
 
-alpha = E_d_min/(E_h_min + E_d_min)
-beta = E_h_min/(E_h_min + E_d_min)
+    # Chiude la finestra
+    root.destroy()
+
+# Creazione della finestra principale
+root = tk.Tk()
+root.title("Inserimento dati")
+root.geometry("400x410")
+
+
+# Etichetta e campi di testo per i dati
+
+# Nome
+tk.Label(root, text="Inserisci nome e cognome:").pack(pady=5)
+nome_entry = ttk.Entry(root, width=30)
+nome_entry.pack(pady=5)
+
+# Diabete
+tk.Label(root, text="Inserisci valore Diabete:").pack(pady=5)
+diabete_entry = ttk.Entry(root, width=30)
+diabete_entry.pack(pady=5)
+
+# Pressione diastolica
+tk.Label(root, text="Inserisci Pressione Diastolica:").pack(pady=5)
+pressione_diastolica_entry = ttk.Entry(root, width=30)
+pressione_diastolica_entry.pack(pady=5)
+
+# Pressione sistolica
+tk.Label(root, text="Inserisci Pressione Sistolica:").pack(pady=5)
+pressione_sistolica_entry = ttk.Entry(root, width=30)
+pressione_sistolica_entry.pack(pady=5)
+
+# Casella di spunta
+checkbox_var = tk.BooleanVar()
+checkbox = ttk.Checkbutton(root, text="Ottimizza costo", variable=checkbox_var)
+checkbox.pack(pady=5)
+
+# Slider per la percentuale con freccette e inserimento manuale
+tk.Label(root, text="Salute del fegato e dei reni:").pack(pady=5)
+percentuale_var = tk.IntVar()
+percentuale_var.set(100)  # Imposta il valore iniziale a 100
+percentuale_spinbox = ttk.Spinbox(root, from_=0, to=100, textvariable=percentuale_var, width=10)
+percentuale_spinbox.pack(pady=5)
+
+# Bottone per inviare i dati e chiudere
+submit_button = ttk.Button(root, text="Conferma", command=submit_and_close)
+submit_button.pack(pady=10)
+
+# Avvia il ciclo principale della finestra
+root.mainloop()
+
+if(misura_glicemia >= 90):                                                      #soglia di attivazione
+    E_d_min = np.maximum(0, misura_glicemia - 80) / 25      # 80 è consideato nominale
+else:
+    E_d_min = 0
+
+if (misura_pressione_sistolica >= 135 or  misura_pressione_diastolica >= 85):   #soglia di attivazione                                                               
+    E_h_min = (np.maximum(misura_pressione_sistolica - 130, 0) + np.maximum(misura_pressione_diastolica - 80, 0)) / 28.3    #
+else:
+    E_h_min = 0
+
+soglia_efficienza_minima = -0.5     #per non creare scompenso nelle efficienze
+
+null_solution = False
+
+if (E_h_min + E_d_min) != 0:
+    alpha = E_d_min/(E_h_min + E_d_min)
+    beta = E_h_min/(E_h_min + E_d_min)
+else:
+    null_solution = True
+
 
 # vincolo di carica farmacologica max
 k_max = (E_d_min + E_h_min)/3 * salute_fegato_reni_perc
 
 # ottimizzazione di spesa massima
-ottimizza = True
 
-if ottimizza :
+if ottimizza_costo :
    Ro = 0.005
 else :
    Ro = 0
@@ -89,14 +165,14 @@ def feasibility(individual):
     # if np.sum(c_i * individual) > budget:
     #     penalty += 1e2
 
-    # # Vincolo di efficienza minima
-    # efficiency_d = np.sum((ed_i - sd_i) * individual)
-    # if efficiency_d < E_d_min:
-    #     penalty += 1e6 * (E_d_min - efficiency_d)
+    # Vincolo di efficienza minima
+    efficiency_d = np.sum((ed_i - sd_i) * individual)
+    if efficiency_d < soglia_efficienza_minima:
+        penalty += 1e6 * (soglia_efficienza_minima - efficiency_d)
         
-    # efficiency_h = np.sum((eh_i - sh_i) * individual)
-    # if efficiency_h < E_h_min:
-    #     penalty += 1e6 * (E_h_min - efficiency_h)
+    efficiency_h = np.sum((eh_i - sh_i) * individual)
+    if efficiency_h < soglia_efficienza_minima:
+        penalty += 1e6 * (soglia_efficienza_minima - efficiency_h)
 
     # Vincolo di dosi massime
     penalty += np.sum(np.maximum(individual - X_i_Max, 0) * 1e5)
@@ -118,10 +194,15 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 # Algoritmo genetico
 toolbox.register("map", map)
 population = toolbox.population(n=200)
-algorithms.eaSimple(population, toolbox, cxpb=0.7, mutpb=0.2, ngen=2000, verbose=True)
+
+if null_solution:
+    best_individual =  [0] * N
+else:
+    algorithms.eaSimple(population, toolbox, cxpb=0.7, mutpb=0.2, ngen=1000, verbose=True)
+    best_individual = tools.selBest(population, k=1)[0]                                     # Migliore soluzione
 
 # Migliore soluzione
-best_individual = tools.selBest(population, k=1)[0]
+
 print("\nMigliore soluzione:", best_individual)
 print("Efficienza su diabete:", np.sum((ed_i - sd_i) * best_individual))
 print("Efficienza su ipertensione:", np.sum((eh_i - sh_i) * best_individual))
@@ -139,7 +220,7 @@ print("\n\n")
 
 
 # generazione piano terapeutico in formato PDF
-output_ricetta = "Il/La signor/a " + nome_paziente + " " + cognome_paziente + " a cura delle seguenti patologie di diabete e ipertensione, dovrà seguire giornalmente il seguente piano terapeutico: \n\n"
+output_ricetta = "Il/La signor/a " + nome_cognome + " a cura delle seguenti patologie di diabete e ipertensione, dovrà seguire giornalmente il seguente piano terapeutico: \n\n"
 for i in range(0,N):
     if best_individual[i] > 0:
         output_ricetta += "x" + str(best_individual[i]) + " - " + nomi_farmaci[i] + "\n"
