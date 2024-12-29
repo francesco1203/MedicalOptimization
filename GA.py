@@ -227,40 +227,45 @@ print("Efficienza totale:", np.sum((ed_i - sd_i + eh_i - sh_i) * best_individual
 print("Carica totale:", np.sum(k_i * best_individual), " (target <=", k_max, ")" )
 print("Costo totale:", np.sum(c_i * best_individual) )
 
-print("\n\nPIANO TERAPEUTICO:")
-for i in range(0,19):
-    if best_individual[i] != 0:
-        print(f"{best_individual[i]} {nomi_farmaci[i]}")
-
-print("\n\n")
-
-
-### GENERAZIONE DEL PIANO TERAPEUTICO IN FORMATO PDF
-
-# generazione pdf
-output_ricetta = "Il/La signor/a " + nome_cognome + " a cura delle seguenti patologie di diabete e ipertensione, dovrà seguire giornalmente il seguente piano terapeutico: \n\n"
-for i in range(0,N):
-    if best_individual[i] > 0:
-        output_ricetta += "x" + str(best_individual[i]) + " - " + nomi_farmaci[i] + "\n"
-
-pdf = FPDF()
-pdf.add_page()
-
-titolo = "Piano terapeutico"
-pdf.set_font("Arial", style="B", size=16)  
-pdf.cell(200, 10, txt=titolo, ln=True, align='C')  
-pdf.ln(10) 
-pdf.set_font("Arial", size=12)  
-pdf.multi_cell(0, 10, txt=output_ricetta, align='L') 
-
-pdf.output("piano.pdf")
-
-
-# apertura pdf
-percorso_pdf = "piano.pdf"
-adobe_path = r"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe"
-
-if os.path.exists(percorso_pdf) and os.path.exists(adobe_path):
-    subprocess.Popen([adobe_path, percorso_pdf])
+if(all(elemento == 0 or elemento is None for elemento in best_individual)):
+    print("\n\nIl paziente è in salute, non ha bisogno di una cura.")
 else:
-    print("File PDF o Acrobat Reader non trovato!")
+    print("\n\nPIANO TERAPEUTICO:")
+    for i in range(0,19):
+        if best_individual[i] != 0:
+            print(f"{best_individual[i]} {nomi_farmaci[i]}")
+
+    print("\n\n")
+
+        
+    ### GENERAZIONE DEL PIANO TERAPEUTICO IN FORMATO PDF
+
+    # generazione pdf
+    output_ricetta = "Il/La signor/a " + nome_cognome + " a cura delle seguenti patologie di diabete e ipertensione, dovrà seguire giornalmente il seguente piano terapeutico: \n\n"
+    for i in range(0,N):
+        if best_individual[i] > 0:
+            output_ricetta += "x" + str(best_individual[i]) + " - " + nomi_farmaci[i] + "\n"
+
+    pdf = FPDF()
+    pdf.add_page()
+
+    titolo = "Piano terapeutico"
+    pdf.set_font("Arial", style="B", size=16)  
+    pdf.cell(200, 10, txt=titolo, ln=True, align='C')  
+    pdf.ln(10) 
+    pdf.set_font("Arial", size=12)  
+    pdf.multi_cell(0, 10, txt=output_ricetta, align='L') 
+
+    pdf.output("piano.pdf")
+
+
+    # apertura pdf
+    percorso_pdf = "piano.pdf"
+    adobe_path = r"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe"
+
+    if os.path.exists(percorso_pdf) and os.path.exists(adobe_path):
+        subprocess.Popen([adobe_path, percorso_pdf])
+    else:
+        print("File PDF o Acrobat Reader non trovato!")
+
+
