@@ -6,41 +6,45 @@ import subprocess
 import os
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageDraw, ImageFont
+
 
 
 ### DEFINIZIONE INTERFACCIA GRAFICA E INSERIMENTO DATI
 
 def submit_and_close():
-    global nome_cognome, misura_glicemia, misura_pressione_sistolica, misura_pressione_diastolica, ottimizza_costo, salute_fegato_reni_perc
-    
+    global nome_cognome, misura_glicemia, misura_pressione_sistolica, misura_pressione_diastolica, ottimizza_costo, salute_fegato_reni_perc, stampa_ricetta
+
     # Recupera i valori inseriti
     nome_cognome = nome_entry.get()
     misura_glicemia = int(diabete_entry.get())
     misura_pressione_sistolica = int(pressione_sistolica_entry.get())
     misura_pressione_diastolica = int(pressione_diastolica_entry.get())
+    salute_fegato_reni_perc = int(percentuale_var.get()) / 100
     ottimizza_costo = bool(checkbox_var.get())
-    salute_fegato_reni_perc = int(percentuale_var.get()) /100
+    stampa_ricetta = bool(stampa_ricetta_var.get())
 
     # Mostra i valori nella console
     print(f"Nome e cognome: {nome_cognome}")
     print(f"Diabete: {misura_glicemia}")
-    print(f"Pressione diastolica: {misura_pressione_diastolica }")
+    print(f"Pressione diastolica: {misura_pressione_diastolica}")
     print(f"Pressione sistolica: {misura_pressione_sistolica}")
+    print(f"Salute fegato e reni: {salute_fegato_reni_perc*100}%")
     print(f"Ottimizza costo selezionato: {ottimizza_costo}")
-    print(f"Percentuale: {salute_fegato_reni_perc}%")
+    print(f"Stampa ricetta PDF: {stampa_ricetta}")
 
     # Chiude la finestra
     root.destroy()
 
 root = tk.Tk()
 root.title("Dati paziente")
-root.geometry("400x410")
-
+root.geometry("400x450")
 
 # Etichetta e campi per dato
 tk.Label(root, text="Inserisci nome e cognome:").pack(pady=5)
 nome_entry = ttk.Entry(root, width=30)
 nome_entry.pack(pady=5)
+nome_entry.insert(0, "Mario Rossi") 
 
 tk.Label(root, text="Inserisci valore Diabete:").pack(pady=5)
 diabete_entry = ttk.Entry(root, width=30)
@@ -54,15 +58,19 @@ tk.Label(root, text="Inserisci Pressione Sistolica:").pack(pady=5)
 pressione_sistolica_entry = ttk.Entry(root, width=30)
 pressione_sistolica_entry.pack(pady=5)
 
-checkbox_var = tk.BooleanVar()
-checkbox = ttk.Checkbutton(root, text="Ottimizza costo", variable=checkbox_var)
-checkbox.pack(pady=5)
-
-tk.Label(root, text="Salute del fegato e dei reni:").pack(pady=5)
+tk.Label(root, text="Salute del fegato e dei reni (%):").pack(pady=5)
 percentuale_var = tk.IntVar()
 percentuale_var.set(100)  # Imposta il valore iniziale a 100
 percentuale_spinbox = ttk.Spinbox(root, from_=0, to=100, textvariable=percentuale_var, width=10)
 percentuale_spinbox.pack(pady=5)
+
+checkbox_var = tk.BooleanVar()
+checkbox = ttk.Checkbutton(root, text="Ottimizza costo", variable=checkbox_var)
+checkbox.pack(pady=5)
+
+stampa_ricetta_var = tk.BooleanVar()
+stampa_ricetta_checkbox = ttk.Checkbutton(root, text="Stampa ricetta PDF", variable=stampa_ricetta_var)
+stampa_ricetta_checkbox.pack(pady=5)
 
 # Bottone per inviare i dati e chiudere
 submit_button = ttk.Button(root, text="Conferma", command=submit_and_close)
@@ -215,7 +223,7 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 # Algoritmo genetico
 toolbox.register("map", map)
 population = toolbox.population(n=200)
-algorithms.eaSimple(population, toolbox, cxpb=0.7, mutpb=0.2, ngen=1000, verbose=True)
+algorithms.eaSimple(population, toolbox, cxpb=0.7, mutpb=0.2, ngen=100, verbose=False)
 best_individual = tools.selBest(population, k=1)[0]                                     # Migliore soluzione
 
 
@@ -227,45 +235,89 @@ print("Efficienza totale:", np.sum((ed_i - sd_i + eh_i - sh_i) * best_individual
 print("Carica totale:", np.sum(k_i * best_individual), " (target <=", k_max, ")" )
 print("Costo totale:", np.sum(c_i * best_individual) )
 
-if(all(elemento == 0 or elemento is None for elemento in best_individual)):
+if(all(elemento == 0 or elemento is None for elemento in best_individual)):     #soluzione nulla, paziente in salute
     print("\n\nIl paziente è in salute, non ha bisogno di una cura.")
 else:
     print("\n\nPIANO TERAPEUTICO:")
+
+    piano_terapeutico_lista = ""
     for i in range(0,19):
         if best_individual[i] != 0:
-            print(f"{best_individual[i]} {nomi_farmaci[i]}")
+            piano_terapeutico_lista += "x" + str(best_individual[i]) + " - " + nomi_farmaci[i] + "\n"
 
-    print("\n\n")
+    print("\n" + piano_terapeutico_lista + "\n\n")
 
-        
     ### GENERAZIONE DEL PIANO TERAPEUTICO IN FORMATO PDF
+    if(stampa_ricetta): #se richiesto dal medico
+        
+        # generazione pdf
+        output_ricetta = "Il/La signor/a " + nome_cognome + " a cura delle seguenti patologie di diabete e ipertensione, dovrà seguire giornalmente il seguente piano terapeutico: \n\n"
+        output_ricetta += piano_terapeutico_lista
 
-    # generazione pdf
-    output_ricetta = "Il/La signor/a " + nome_cognome + " a cura delle seguenti patologie di diabete e ipertensione, dovrà seguire giornalmente il seguente piano terapeutico: \n\n"
-    for i in range(0,N):
-        if best_individual[i] > 0:
-            output_ricetta += "x" + str(best_individual[i]) + " - " + nomi_farmaci[i] + "\n"
+        pdf = FPDF()
+        pdf.add_page()
 
-    pdf = FPDF()
-    pdf.add_page()
+        titolo = "Piano terapeutico"
+        pdf.set_font("Arial", style="B", size=16)  
+        pdf.cell(200, 10, txt=titolo, ln=True, align='C')  
+        pdf.ln(10) 
+        pdf.set_font("Arial", size=12)  
+        pdf.multi_cell(0, 10, txt=output_ricetta, align='L') 
 
-    titolo = "Piano terapeutico"
-    pdf.set_font("Arial", style="B", size=16)  
-    pdf.cell(200, 10, txt=titolo, ln=True, align='C')  
-    pdf.ln(10) 
-    pdf.set_font("Arial", size=12)  
-    pdf.multi_cell(0, 10, txt=output_ricetta, align='L') 
-
-    pdf.output("piano.pdf")
+        pdf.output("piano.pdf")
 
 
-    # apertura pdf
-    percorso_pdf = "piano.pdf"
-    adobe_path = r"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe"
+        # apertura pdf
+        percorso_pdf = "piano.pdf"
+        adobe_path = r"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe"
 
-    if os.path.exists(percorso_pdf) and os.path.exists(adobe_path):
-        subprocess.Popen([adobe_path, percorso_pdf])
-    else:
-        print("File PDF o Acrobat Reader non trovato!")
+        if os.path.exists(percorso_pdf) and os.path.exists(adobe_path):
+            subprocess.Popen([adobe_path, percorso_pdf])
+        else:
+            print("File PDF o Acrobat Reader non trovato!")
 
+
+### GENERAZIONE IMMAGINE TEST (utili per presentazione powerpoint esame)
+genera_test = True
+
+if(genera_test):
+    #creazione immagine
+    width, height = 800, 400
+    background_color = (255, 255, 255)
+    image = Image.new("RGB", (width, height), background_color)
+    draw = ImageDraw.Draw(image)
+
+    # Testo da aggiungere
+    text = "Migliore soluzione: " + str(best_individual) + "\n"
+    text+= "Efficienza su diabete: " + str(np.sum((ed_i - sd_i) * best_individual)) + "\n"
+    text+= "Efficienza su ipertensione: " + str(np.sum((eh_i - sh_i) * best_individual)) + "\n"
+    text+= "Efficienza totale: " + str(np.sum((ed_i - sd_i + eh_i - sh_i) * best_individual)) + "\n"
+    text+= "Carica totale: " + str(np.sum(k_i * best_individual)) +  " (target <=" + str(k_max) + ")\n"
+    text+= "Costo totale: " + str(np.sum(c_i * best_individual)) + "\n\n"
+    text+= "PIANO TERAPEUTICO:\n\n" + piano_terapeutico_lista
+
+    #font
+    font_color = (0, 0, 0)  # Colore del testo
+    font_size = 25          # Dimensione font
+    try:
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except IOError:
+        font = ImageFont.load_default()  
+
+    # posizione per centrare il testo usando textbbox
+    text_bbox = draw.textbbox((0, 0), text, font=font)
+    text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
+    text_x = (width - text_width) // 2
+    text_y = (height - text_height) // 2
+
+    # Aggiungi il testo all'immagine
+    draw.text((text_x, text_y), text, fill=font_color, font=font)
+
+    # path e titolo
+    titolo = str(misura_glicemia) + "," + str(misura_pressione_diastolica) + "-" + str(misura_pressione_sistolica) + "," + str(int(salute_fegato_reni_perc * 100)) + " (GA).png"
+    output_path = "risultati_test/" + titolo
+
+    #salve immagine
+    image.save(output_path)
+    print(f"Immagine salvata in: {output_path}")
 
