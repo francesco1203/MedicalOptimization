@@ -9,9 +9,14 @@ from tkinter import ttk
 from PIL import Image, ImageDraw, ImageFont
 
 
+#flag
+test_mode = True    #disattiva l'interfaccia grafica e prende i valori da testGA.py
+
+
 
 ### DEFINIZIONE INTERFACCIA GRAFICA E INSERIMENTO DATI
 
+#funzione di accettazione
 def submit_and_close():
     global nome_cognome, misura_glicemia, misura_pressione_sistolica, misura_pressione_diastolica, ottimizza_costo, salute_fegato_reni_perc, stampa_ricetta
 
@@ -76,8 +81,10 @@ stampa_ricetta_checkbox.pack(pady=5)
 submit_button = ttk.Button(root, text="Conferma", command=submit_and_close)
 submit_button.pack(pady=10)
 
-# Avvia il ciclo principale della finestra
-root.mainloop()
+# Avvia il ciclo principale della finestra 
+if(not test_mode):                          #in test mode non uso l'interfaccia grafica
+    root.mainloop()
+
 
 
 
@@ -96,8 +103,8 @@ coefficiente_di_scala_glicemia = 25
 
 pressione_diastolica_nominale = 80
 pressione_diastolica_soglia_attivazione = 90
-pressione_sistolica_nominale = 130
-pressione_sistolica_soglia_attivazione = 140
+pressione_sistolica_nominale = 120
+pressione_sistolica_soglia_attivazione = 130
 coefficiente_di_scala_pressione = 28.3
 
 coefficiente_di_scala_carica = 3
@@ -223,7 +230,7 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 # Algoritmo genetico
 toolbox.register("map", map)
 population = toolbox.population(n=200)
-algorithms.eaSimple(population, toolbox, cxpb=0.7, mutpb=0.2, ngen=100, verbose=False)
+algorithms.eaSimple(population, toolbox, cxpb=0.7, mutpb=0.2, ngen=1000, verbose=False)
 best_individual = tools.selBest(population, k=1)[0]                                     # Migliore soluzione
 
 
@@ -314,7 +321,8 @@ if(genera_test):
     draw.text((text_x, text_y), text, fill=font_color, font=font)
 
     # path e titolo
-    titolo = str(misura_glicemia) + "," + str(misura_pressione_diastolica) + "-" + str(misura_pressione_sistolica) + "," + str(int(salute_fegato_reni_perc * 100)) + " (GA).png"
+    
+    titolo = str(misura_glicemia) + "," + str(misura_pressione_diastolica) + "-" + str(misura_pressione_sistolica) + "," + str(int(salute_fegato_reni_perc * 100)) + (" -O" if ottimizza_costo else "") + " (GA).png"
     output_path = "risultati_test/" + titolo
 
     #salve immagine
