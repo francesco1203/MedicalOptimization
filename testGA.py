@@ -28,8 +28,8 @@ def test():
                     variabili = {
                         "nome_cognome": "test test",
                         "misura_glicemia": misura_diabete_test,
-                        "misura_pressione_sistolica": misura_pressione_test[0],
-                        "misura_pressione_diastolica": misura_pressione_test[1],
+                        "misura_pressione_diastolica": misura_pressione_test[0],
+                        "misura_pressione_sistolica": misura_pressione_test[1],
                         "salute_fegato_reni_perc": misura_fegatoreni_test / 100,
                         "ottimizza_costo": ottimizza_costo_test,
                         "stampa_ricetta": False,

@@ -242,15 +242,17 @@ print("Efficienza totale:", np.sum((ed_i - sd_i + eh_i - sh_i) * best_individual
 print("Carica totale:", np.sum(k_i * best_individual), " (target <=", k_max, ")" )
 print("Costo totale:", np.sum(c_i * best_individual) )
 
+
+piano_terapeutico_lista = ""
+for i in range(0,N-1):
+    if best_individual[i] != 0:
+        piano_terapeutico_lista += "x" + str(best_individual[i]) + " - " + nomi_farmaci[i] + "\n"
+
+
 if(all(elemento == 0 or elemento is None for elemento in best_individual)):     #soluzione nulla, paziente in salute
     print("\n\nIl paziente è in salute, non ha bisogno di una cura.")
 else:
     print("\n\nPIANO TERAPEUTICO:")
-
-    piano_terapeutico_lista = ""
-    for i in range(0,19):
-        if best_individual[i] != 0:
-            piano_terapeutico_lista += "x" + str(best_individual[i]) + " - " + nomi_farmaci[i] + "\n"
 
     print("\n" + piano_terapeutico_lista + "\n\n")
 
