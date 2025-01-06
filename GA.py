@@ -10,7 +10,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 #flag
-test_mode = True    #disattiva l'interfaccia grafica e prende i valori da testGA.py
+test_mode = False           #se true, disattiva l'interfaccia grafica e prende i valori da testGA.py
+genera_immagine = False     #se true, genera l'immagine dei risultati ottenuti
+
 
 
 
@@ -26,7 +28,6 @@ def submit_and_close():
     misura_pressione_sistolica = int(pressione_sistolica_entry.get())
     misura_pressione_diastolica = int(pressione_diastolica_entry.get())
     salute_fegato_reni_perc = int(percentuale_var.get()) / 100
-    ottimizza_costo = bool(checkbox_var.get())
     stampa_ricetta = bool(stampa_ricetta_var.get())
 
     # Mostra i valori nella console
@@ -35,7 +36,6 @@ def submit_and_close():
     print(f"Pressione diastolica: {misura_pressione_diastolica}")
     print(f"Pressione sistolica: {misura_pressione_sistolica}")
     print(f"Salute fegato e reni: {salute_fegato_reni_perc*100}%")
-    print(f"Ottimizza costo selezionato: {ottimizza_costo}")
     print(f"Stampa ricetta PDF: {stampa_ricetta}")
 
     # Chiude la finestra
@@ -68,10 +68,6 @@ percentuale_var = tk.IntVar()
 percentuale_var.set(100)  # Imposta il valore iniziale a 100
 percentuale_spinbox = ttk.Spinbox(root, from_=0, to=100, textvariable=percentuale_var, width=10)
 percentuale_spinbox.pack(pady=5)
-
-checkbox_var = tk.BooleanVar()
-checkbox = ttk.Checkbutton(root, text="Ottimizza costo", variable=checkbox_var)
-checkbox.pack(pady=5)
 
 stampa_ricetta_var = tk.BooleanVar()
 stampa_ricetta_checkbox = ttk.Checkbutton(root, text="Stampa ricetta PDF", variable=stampa_ricetta_var)
@@ -112,11 +108,8 @@ coefficiente_di_scala_carica = 3
 peso_ottimizzazione_costo = 0.005
 
 
-# (facoltativo per utente) ottimizzazione di spesa massima
-if ottimizza_costo :
-   Ro = peso_ottimizzazione_costo       
-else :
-   Ro = 0
+# ottimizzazione di spesa massima
+Ro = peso_ottimizzazione_costo       
 
 
 # calcolo euristico dei pesi dell'ottimizzazione, alpha e beta
@@ -287,9 +280,7 @@ else:
 
 
 ### GENERAZIONE IMMAGINE TEST (utili per presentazione powerpoint esame)
-genera_test = True
-
-if(genera_test):
+if(genera_immagine):
     #creazione immagine
     width, height = 800, 400
     background_color = (255, 255, 255)
@@ -323,8 +314,7 @@ if(genera_test):
     draw.text((text_x, text_y), text, fill=font_color, font=font)
 
     # path e titolo
-    
-    titolo = str(misura_glicemia) + "," + str(misura_pressione_diastolica) + "-" + str(misura_pressione_sistolica) + "," + str(int(salute_fegato_reni_perc * 100)) + (" -O" if ottimizza_costo else "") + " (GA).png"
+    titolo = str(misura_glicemia) + "," + str(misura_pressione_diastolica) + "-" + str(misura_pressione_sistolica) + "," + str(int(salute_fegato_reni_perc * 100)) + " -O (GA).png"
     output_path = "risultati_test/" + titolo
 
     #salve immagine
