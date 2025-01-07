@@ -105,12 +105,6 @@ coefficiente_di_scala_pressione = 28.3
 
 coefficiente_di_scala_carica = 3
 
-peso_ottimizzazione_costo = 0.005
-
-
-# ottimizzazione di spesa massima
-Ro = peso_ottimizzazione_costo       
-
 
 # calcolo euristico dei pesi dell'ottimizzazione, alpha e beta
 if(misura_glicemia >= glicemia_soglia_attivazione):                                                    
@@ -150,7 +144,6 @@ incompatibility_matrix = pd.read_csv('incompatibility_matrix.csv', header=None, 
 
 drug_data = pd.read_csv('drug_data.csv', nrows=N)
 X_i_Max = drug_data['X_i_Max'].to_numpy()       # Limite massimo di dosi
-c_i = drug_data['c_i'].to_numpy()               # Costi
 k_i = drug_data['k_i'].to_numpy()               # Cariche farmacologiche
 ed_i = drug_data['ed_i'].to_numpy()             # Efficienza per diabete
 sd_i = drug_data['sd_i'].to_numpy()             # Effetti collaterali per diabete
@@ -176,7 +169,7 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 # Funzione obiettivo
 def evaluate(individual):
     # Calcolo dell'efficienza totale
-    efficiency = np.sum((alpha * (ed_i - sd_i ) + beta * (eh_i - sh_i) - Ro * c_i) * individual)
+    efficiency = np.sum((alpha * (ed_i - sd_i ) + beta * (eh_i - sh_i)) * individual)
     # Penalità per i vincoli
     penalty = feasibility(individual)
 
@@ -186,8 +179,6 @@ def evaluate(individual):
 # Penalità per i vincoli
 def feasibility(individual):
     penalty = 0
-
-    #print("\ncarica: " + str(np.sum(k_i * individual)) + " - costo: " + str(np.sum(c_i * individual)))
 
     # Vincolo di carica farmacologica
     carica = np.sum(k_i * individual) 
@@ -233,7 +224,6 @@ print("Efficienza su diabete:", np.sum((ed_i - sd_i) * best_individual))
 print("Efficienza su ipertensione:", np.sum((eh_i - sh_i) * best_individual))
 print("Efficienza totale:", np.sum((ed_i - sd_i + eh_i - sh_i) * best_individual))
 print("Carica totale:", np.sum(k_i * best_individual), " (target <=", k_max, ")" )
-print("Costo totale:", np.sum(c_i * best_individual) )
 
 
 piano_terapeutico_lista = ""
@@ -292,8 +282,7 @@ if(genera_immagine):
     text+= "Efficienza su diabete: " + str(np.sum((ed_i - sd_i) * best_individual)) + "\n"
     text+= "Efficienza su ipertensione: " + str(np.sum((eh_i - sh_i) * best_individual)) + "\n"
     text+= "Efficienza totale: " + str(np.sum((ed_i - sd_i + eh_i - sh_i) * best_individual)) + "\n"
-    text+= "Carica totale: " + str(np.sum(k_i * best_individual)) +  " (target <=" + str(k_max) + ")\n"
-    text+= "Costo totale: " + str(np.sum(c_i * best_individual)) + "\n\n"
+    text+= "Carica totale: " + str(np.sum(k_i * best_individual)) +  " (target <=" + str(k_max) + "\n\n"
     text+= "PIANO TERAPEUTICO:\n\n" + piano_terapeutico_lista
 
     #font
